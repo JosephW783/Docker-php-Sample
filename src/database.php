@@ -1,5 +1,5 @@
 <?php
-
+// Il file database.php serve per connettere il database MYSQL con PHP
 // Read the database connection parameters from environment variables
 $db_host = getenv('DB_HOST');
 $db_name = getenv('DB_NAME');
@@ -44,4 +44,4 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
 // Close the database connection
 $db_handle = null;
-?>
+

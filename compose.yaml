@@ -1,0 +1,71 @@
+# Comments are provided throughout this file to help you get started.
+# If you need more help, visit the Docker Compose reference guide at
+# https://docs.docker.com/go/compose-spec-reference/
+
+# Here the instructions define your application as a service called "server".
+# This service is built from the Dockerfile in the current directory.
+# You can add other services your application may depend on here, such as a
+# database or a cache. For examples, see the Awesome Compose repository:
+# https://github.com/docker/awesome-compose
+services:
+  server:
+    build:
+      context: .
+      target: development
+    ports:
+      - 9000:80
+
+# La sezione commentata di seguito è un esempio di come definire un database PostgreSQL che la tua applicazione può utilizzare.
+#`depends_on` dice a Docker Compose di avviare il database prima dell'applicazione. 
+# Il volume "db-data" persiste dati del database tra i riavvii del contenitore. Viene utilizzato il segreto `db-password`
+# per impostare la password del database. Devi creare `db/password.txt` e aggiungere
+# una password di tua scelta prima di eseguire "docker-compose up".
+# successivamente aggiorno compose.yaml per aggiungere un nuovo servizio 'phpMyAdmin'
+# attraverso docker compose 'watch' aggiorno automaticamente i serviziCompose in esecuzione mentre modifico e salvo il codice
+    depends_on:
+      db:
+        condition: service_healthy 
+    secrets:
+      - db-password
+    environment:
+      - PASSWORD_FILE_PATH=/run/secrets/db-password
+      - DB_HOST=db
+      - DB_NAME=example
+      - DB_USER=root
+    develop:
+      watch:
+        - action: sync
+          path: ./src 
+          target: /var/ww/html
+  db:
+    image: mariadb
+    restart: always
+    user: root
+    secrets:
+      - db-password
+    volumes:
+      - db-data:/var/lib/mysql
+    environment:
+      - MARIADB_ROOT_PASSWORD_FILE=/run/secrets/db-password
+      - MARIADB_DATABASE=example
+    expose:
+      - 3306
+    healthcheck:
+      test:  ["CMD", "/usr/local/bin/healthcheck.sh", "--su-mysql", "--connect",  "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  phpmyadmin:
+    image: phpmyadmin
+    ports:
+      - 8080:80
+    depends_on:
+      - db
+    environment:
+      - PMA_HOST=db
+volumes:
+  db-data:
+secrets:
+  db-password:
+    file: db/password.txt
+
